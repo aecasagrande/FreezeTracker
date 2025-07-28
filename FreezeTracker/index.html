@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch with Freeze Tracker</title>
+    <style>
+        /* Add your CSS here for styling */
+        #app {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #timerDisplay {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #reportBox {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 30px;
+            display: none; /* Hidden by default */
+            width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="timerDisplay">00:00:00.000</div>
+        <button id="startButton">Start</button>
+        <button id="freezeButton" disabled>Record Freeze</button>
+        <button id="stopButton" disabled>Stop</button>
+        <div id="reportBox">
+            <h3>Report:</h3>
+            <p>Total Trial Time: <span id="totalTrialTime"></span></p>
+            <p>Number of Freezes: <span id="numberOfFreezes"></span></p>
+            <p>% of Trial Spent Frozen: <span id="percentFrozen"></span></p>
+            <p>Time Spent Frozen: <span id="timeSpentFrozen"></span></p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
