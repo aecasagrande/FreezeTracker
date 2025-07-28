@@ -1,6 +1,6 @@
 // HTML Structure (in your index.html file):
 /*
-(This remains mostly the same, just an added span in reportBox)
+(This remains the same as before)
 */
 
 // JavaScript (in a script.js file linked to your HTML):
@@ -21,7 +21,7 @@ const reportBox = document.getElementById('reportBox');
 const totalTrialTimeSpan = document.getElementById('totalTrialTime');
 const numberOfFreezesSpan = document.getElementById('numberOfFreezes');
 const percentFrozenSpan = document.getElementById('percentFrozen');
-const timeSpentFrozenSpan = document.getElementById('timeSpentFrozen'); // New span element
+const timeSpentFrozenSpan = document.getElementById('timeSpentFrozen');
 
 // --- Functions ---
 
@@ -54,16 +54,23 @@ function startStopwatch() {
     }, 10); // Update every 10 milliseconds for smoother display
 }
 
-function recordFreezeStart() {
-    if (!isRunning || freezePressStartTime !== 0) return; // Prevent multiple start times if held down repeatedly
+// Unified function for both mouse down and touch start
+function recordFreezeStart(event) {
+    // Prevent the default browser action (like text selection on touch, or drag on desktop)
+    event.preventDefault();
+
+    // Only start if stopwatch is running and not already tracking a press
+    if (!isRunning || freezePressStartTime !== 0) return;
 
     freezePressStartTime = Date.now(); // Mark the start of the hold
     freezeButton.style.backgroundColor = 'red';
     console.log('Freeze button pressed...');
 }
 
+// Unified function for both mouse up and touch end/cancel
 function recordFreezeEnd() {
-    if (!isRunning || freezePressStartTime === 0) return; // Only process if a freeze was started
+    // Only process if stopwatch is running and a press was started
+    if (!isRunning || freezePressStartTime === 0) return;
 
     const freezeDuration = Date.now() - freezePressStartTime;
     totalFreezeDuration += freezeDuration;
@@ -96,21 +103,31 @@ function stopStopwatch() {
     const totalTrialTime = Date.now() - startTime;
     const percentFrozen = (totalFreezeDuration / totalTrialTime) * 100 || 0; // Handle division by zero
 
-    // Calculate the time that corresponds to the percentage
-    // If totalTrialTime is 0 (e.g., stopped immediately), this would be 0
     const timeForPercent = (totalTrialTime * percentFrozen) / 100;
 
     // Display Report
     totalTrialTimeSpan.textContent = formatTime(totalTrialTime);
     numberOfFreezesSpan.textContent = freezeCount;
     percentFrozenSpan.textContent = `${percentFrozen.toFixed(2)}%`;
-    timeSpentFrozenSpan.textContent = formatTime(timeForPercent); // Display the new value
+    timeSpentFrozenSpan.textContent = formatTime(timeForPercent);
     reportBox.style.display = 'block';
 }
 
 // --- Event Listeners ---
 startButton.addEventListener('click', startStopwatch);
+
+// --- Mouse Events (for Desktop/Laptop with a mouse) ---
 freezeButton.addEventListener('mousedown', recordFreezeStart);
 freezeButton.addEventListener('mouseup', recordFreezeEnd);
-freezeButton.addEventListener('mouseleave', recordFreezeEnd); // In case mouse is dragged off button
+// This 'mouseleave' handles cases where the mouse is dragged off the button while held
+freezeButton.addEventListener('mouseleave', recordFreezeEnd);
+
+// --- Touch Events (for Mobile Phones/Tablets) ---
+// touchstart: when a finger first touches the screen
+freezeButton.addEventListener('touchstart', recordFreezeStart);
+// touchend: when a finger is lifted from the screen
+freezeButton.addEventListener('touchend', recordFreezeEnd);
+// touchcancel: when a touch is interrupted (e.g., too many fingers, incoming call)
+freezeButton.addEventListener('touchcancel', recordFreezeEnd);
+
 stopButton.addEventListener('click', stopStopwatch);
