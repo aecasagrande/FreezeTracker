@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stopwatch with Freeze Tracker</title>
+    <title>Freeze Tracker FoG Classifier</title>
     <style>
         body {
-            font-family: 'Inter', sans-serif; /* Using Inter font */
+            font-family: 'Inter', sans-serif;
             text-align: center;
             display: flex;
-            flex-direction: column; /* Arrange content vertically */
-            align-items: center; /* Center horizontally */
-            justify-content: flex-start; /* Start content from the top */
-            min-height: 100vh; /* Full viewport height */
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
             margin: 0;
-            background-color: #f0f2f5; /* Light background */
+            background-color: #f0f2f5;
             padding: 20px;
-            box-sizing: border-box; /* Include padding in element's total width and height */
+            box-sizing: border-box;
         }
 
         #app {
@@ -24,24 +24,68 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 400px; /* Max width for better mobile display */
+            max-width: 450px; /* Slightly wider to accommodate new inputs */
             background-color: #ffffff;
             padding: 25px;
-            border-radius: 15px; /* Rounded corners for the main app container */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column; /* Stack label and input */
+            align-items: flex-start; /* Align text to left */
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1.1em;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .trial-input-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .trial-input-container button {
+            padding: 8px 15px;
+            font-size: 1.2em;
+            margin: 0 5px; /* Space around +/- buttons */
+            background-color: #6c757d; /* Grey for +/- */
+            color: white;
+            border-radius: 8px;
+            box-shadow: none; /* No shadow on these small buttons */
+        }
+        .trial-input-container button:active {
+            background-color: #5a6268;
+            transform: scale(0.95);
         }
 
         #reportBox {
-            /* Moved to the top, outside the main button area */
             border: 1px solid #e0e0e0;
             padding: 15px;
-            margin-bottom: 25px; /* Space below report box */
+            margin-bottom: 25px;
             border-radius: 10px;
             background-color: #e9ecef;
-            width: 100%; /* Take full width of parent */
+            width: 100%;
             box-sizing: border-box;
-            display: none; /* Hidden by default */
-            text-align: left; /* Align text within report box */
+            display: none;
+            text-align: left;
         }
 
         #reportBox h3 {
@@ -61,38 +105,56 @@
 
         #reportBox span {
             font-weight: bold;
-            color: #007bff; /* Highlight values */
+            color: #007bff;
+        }
+        
+        /* Specific styling for classification results */
+        #reportBox .classification-result {
+            margin-top: 10px; /* Space above classification */
+            padding-top: 10px;
+            border-top: 1px solid #d0d0d0;
+            font-size: 1em;
+            color: #333;
+        }
+
+        /* Removed #freezeTimeline styling as it's no longer needed */
+
+        .freeze-segment { /* This class is no longer strictly used, but keeping for now */
+            background-color: #007bff;
+            height: 100%;
+            position: absolute;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
         #timerDisplay {
-            font-size: 3.5em; /* Larger timer */
+            font-size: 3.5em;
             margin-bottom: 30px;
             font-weight: bold;
             color: #343a40;
             letter-spacing: 1px;
-            width: 100%; /* Ensure it takes full width */
+            width: 100%;
         }
 
         .button-container {
             display: flex;
-            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 15px; /* Space between buttons */
+            gap: 15px;
             width: 100%;
         }
 
         button {
-            padding: 15px 25px; /* Larger padding for buttons */
-            font-size: 1.3em; /* Larger font for buttons */
+            padding: 15px 25px;
+            font-size: 1.3em;
             border: none;
-            border-radius: 10px; /* More rounded corners */
+            border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transitions */
+            transition: background-color 0.2s ease, transform 0.1s ease;
             font-weight: bold;
-            color: #fff; /* White text for buttons */
+            color: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 
-            /* --- CRITICAL TOUCH/SELECTION FIXES --- */
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
@@ -100,40 +162,37 @@
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
-            /* --- END CRITICAL FIXES --- */
         }
 
         #startButton {
-            background-color: #28a745; /* Green */
+            background-color: #28a745;
         }
         #startButton:active {
-            transform: scale(0.98); /* Slight press effect */
+            transform: scale(0.98);
             background-color: #218838;
         }
 
         #freezeButton {
-            background-color: #007bff; /* Blue */
-            flex-grow: 1; /* Allow it to take more space */
-            min-width: 180px; /* Ensure it's large enough */
+            background-color: #007bff;
+            flex-grow: 1;
+            min-width: 180px;
         }
         #freezeButton:active {
             transform: scale(0.98);
             background-color: #0056b3;
         }
-        /* Style for when freezeButton is actively pressed (red) */
         #freezeButton[style*="background-color: red"] {
-            background-color: #dc3545 !important; /* Red */
+            background-color: #dc3545 !important;
         }
 
-
         #stopButton {
-            background-color: #dc3545; /* Red */
+            background-color: #dc3545;
         }
         #stopButton:active {
             transform: scale(0.98);
             background-color: #c82333;
         }
-
+        
         button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
@@ -149,13 +208,17 @@
             button {
                 font-size: 1.1em;
                 padding: 12px 20px;
-                flex-basis: 100%; /* Stack buttons on very small screens */
+                flex-basis: 100%;
             }
             #freezeButton {
-                min-width: unset; /* Remove min-width to allow full stacking */
+                min-width: unset;
             }
             #app {
                 padding: 15px;
+            }
+            .trial-input-container button {
+                padding: 6px 12px;
+                font-size: 1em;
             }
         }
     </style>
@@ -163,21 +226,40 @@
 </head>
 <body>
     <div id="app">
-        <!-- Report Box is now at the top -->
+        <div class="input-group">
+            <label for="patientId">Patient ID:</label>
+            <input type="text" id="patientId" placeholder="e.g., P001" value="P001">
+        </div>
+
+        <div class="input-group">
+            <label for="trialNumber">Trial #:</label>
+            <div class="trial-input-container">
+                <button id="decrementTrial">-</button>
+                <input type="number" id="trialNumber" value="1" min="1" step="1" readonly>
+                <button id="incrementTrial">+</button>
+            </div>
+        </div>
+
         <div id="reportBox">
-            <h3>Report:</h3>
+            <h3>Trial Report:</h3>
+            <p>Patient ID: <span id="reportPatientId"></span></p>
+            <p>Trial #: <span id="reportTrialNumber"></span></p>
             <p>Total Trial Time: <span id="totalTrialTime"></span></p>
             <p>Number of Freezes: <span id="numberOfFreezes"></span></p>
             <p>% of Trial Spent Frozen: <span id="percentFrozen"></span></p>
             <p>Time Spent Frozen: <span id="timeSpentFrozen"></span></p>
+            
+            <h4 class="classification-result">FoG Classification:</h4>
+            <p>Cumulative Duration: <span id="cumulativeFoGGrade"></span></p>
+            <p>Frequency: <span id="frequencyFoGGrade"></span></p>
         </div>
 
         <div id="timerDisplay">00:00:00.000</div>
 
         <div class="button-container">
-            <button id="startButton">Start</button>
+            <button id="startButton">Start Trial</button>
             <button id="freezeButton" disabled>Record Freeze</button>
-            <button id="stopButton" disabled>Stop</button>
+            <button id="stopButton" disabled>Stop Trial</button>
         </div>
     </div>
     <script src="script.js"></script>
