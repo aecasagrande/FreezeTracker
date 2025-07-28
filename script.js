@@ -1,6 +1,6 @@
 // HTML Structure (in your index.html file):
 /*
-(This remains the same as before)
+(This remains the same as before, with new CSS in style tag)
 */
 
 // JavaScript (in a script.js file linked to your HTML):
@@ -52,25 +52,46 @@ function startStopwatch() {
         const elapsedTime = Date.now() - startTime;
         timerDisplay.textContent = formatTime(elapsedTime);
     }, 10); // Update every 10 milliseconds for smoother display
+
+    console.log('Stopwatch started!');
 }
 
 // Unified function for both mouse down and touch start
 function recordFreezeStart(event) {
     // Prevent the default browser action (like text selection on touch, or drag on desktop)
     event.preventDefault();
+    console.log('recordFreezeStart triggered by:', event.type); // Debugging log
 
     // Only start if stopwatch is running and not already tracking a press
-    if (!isRunning || freezePressStartTime !== 0) return;
+    if (!isRunning || freezePressStartTime !== 0) {
+        console.log('Freeze start ignored (not running or already started):', { isRunning, freezePressStartTime }); // Debugging log
+        return;
+    }
 
     freezePressStartTime = Date.now(); // Mark the start of the hold
     freezeButton.style.backgroundColor = 'red';
-    console.log('Freeze button pressed...');
+    console.log('Freeze button pressed. Start time:', freezePressStartTime);
+
+    // Vibrate the device if supported
+    if (navigator.vibrate) {
+        navigator.vibrate(200); // Vibrate for 200 milliseconds (can be an array for patterns, but 200 is simple)
+        console.log('Vibrated!');
+    } else {
+        console.log('Vibration not supported or API unavailable.');
+    }
 }
 
 // Unified function for both mouse up and touch end/cancel
-function recordFreezeEnd() {
+function recordFreezeEnd(event) {
+    // Optional: event.preventDefault(); // Usually not needed on 'end' events, but can be added if issues persist
+
+    console.log('recordFreezeEnd triggered by:', event.type); // Debugging log
+
     // Only process if stopwatch is running and a press was started
-    if (!isRunning || freezePressStartTime === 0) return;
+    if (!isRunning || freezePressStartTime === 0) {
+        console.log('Freeze end ignored (not running or no start time):', { isRunning, freezePressStartTime }); // Debugging log
+        return;
+    }
 
     const freezeDuration = Date.now() - freezePressStartTime;
     totalFreezeDuration += freezeDuration;
@@ -111,6 +132,8 @@ function stopStopwatch() {
     percentFrozenSpan.textContent = `${percentFrozen.toFixed(2)}%`;
     timeSpentFrozenSpan.textContent = formatTime(timeForPercent);
     reportBox.style.display = 'block';
+
+    console.log('Stopwatch stopped. Report generated.');
 }
 
 // --- Event Listeners ---
