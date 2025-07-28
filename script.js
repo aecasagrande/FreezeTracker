@@ -1,6 +1,6 @@
 // HTML Structure (in your index.html file):
 /*
-(This remains the same as before, with new CSS in style tag)
+(This remains the same as your last valid HTML, with the updated CSS for buttons)
 */
 
 // JavaScript (in a script.js file linked to your HTML):
@@ -58,13 +58,12 @@ function startStopwatch() {
 
 // Unified function for both mouse down and touch start
 function recordFreezeStart(event) {
-    // Prevent the default browser action (like text selection on touch, or drag on desktop)
     event.preventDefault();
-    console.log('recordFreezeStart triggered by:', event.type); // Debugging log
+    console.log('recordFreezeStart triggered by:', event.type);
 
     // Only start if stopwatch is running and not already tracking a press
     if (!isRunning || freezePressStartTime !== 0) {
-        console.log('Freeze start ignored (not running or already started):', { isRunning, freezePressStartTime }); // Debugging log
+        console.log('Freeze start ignored (not running or already started):', { isRunning, freezePressStartTime });
         return;
     }
 
@@ -72,10 +71,12 @@ function recordFreezeStart(event) {
     freezeButton.style.backgroundColor = 'red';
     console.log('Freeze button pressed. Start time:', freezePressStartTime);
 
-    // Vibrate the device if supported
+    // Vibrate the device continuously (or for a very long duration that will be stopped)
     if (navigator.vibrate) {
-        navigator.vibrate(200); // Vibrate for 200 milliseconds (can be an array for patterns, but 200 is simple)
-        console.log('Vibrated!');
+        // Vibrate for a very long time (e.g., 5 minutes = 300,000ms).
+        // It will be stopped by recordFreezeEnd or stopStopwatch functions.
+        navigator.vibrate(300000);
+        console.log('Vibration started!');
     } else {
         console.log('Vibration not supported or API unavailable.');
     }
@@ -83,13 +84,11 @@ function recordFreezeStart(event) {
 
 // Unified function for both mouse up and touch end/cancel
 function recordFreezeEnd(event) {
-    // Optional: event.preventDefault(); // Usually not needed on 'end' events, but can be added if issues persist
-
-    console.log('recordFreezeEnd triggered by:', event.type); // Debugging log
+    console.log('recordFreezeEnd triggered by:', event.type);
 
     // Only process if stopwatch is running and a press was started
     if (!isRunning || freezePressStartTime === 0) {
-        console.log('Freeze end ignored (not running or no start time):', { isRunning, freezePressStartTime }); // Debugging log
+        console.log('Freeze end ignored (not running or no start time):', { isRunning, freezePressStartTime });
         return;
     }
 
@@ -101,6 +100,12 @@ function recordFreezeEnd(event) {
     freezeButton.style.backgroundColor = ''; // Back to default
 
     console.log(`Freeze ended. Duration: ${formatTime(freezeDuration)}. Total freezes: ${freezeCount}`);
+
+    // Stop vibration when button is released
+    if (navigator.vibrate) {
+        navigator.vibrate(0); // Pass 0 to stop any ongoing vibration
+        console.log('Vibration stopped!');
+    }
 }
 
 function stopStopwatch() {
@@ -116,9 +121,15 @@ function stopStopwatch() {
     // If the freeze button was still being held when STOP was pressed
     if (freezePressStartTime !== 0) {
         totalFreezeDuration += (Date.now() - freezePressStartTime);
-        freezeCount++; // Count this as a freeze episode
-        freezePressStartTime = 0; // Reset
-        freezeButton.style.backgroundColor = ''; // Reset visual cue
+        freezeCount++;
+        freezePressStartTime = 0;
+        freezeButton.style.backgroundColor = '';
+    }
+
+    // Ensure vibration stops if stopwatch is stopped while freeze button is held
+    if (navigator.vibrate) {
+        navigator.vibrate(0); // Stop any ongoing vibration
+        console.log('Vibration stopped by stopStopwatch!');
     }
 
     const totalTrialTime = Date.now() - startTime;
