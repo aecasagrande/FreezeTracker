@@ -5,45 +5,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stopwatch with Freeze Tracker</title>
     <style>
-        /* Add your CSS here for styling */
-        #app {
-            font-family: Arial, sans-serif;
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
             text-align: center;
-            margin-top: 50px;
-        }
-        #timerDisplay {
-            font-size: 3em;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            margin: 5px;
-            cursor: pointer;
-        }
-        #reportBox {
-            border: 1px solid #ccc;
+            display: flex;
+            flex-direction: column; /* Arrange content vertically */
+            align-items: center; /* Center horizontally */
+            justify-content: flex-start; /* Start content from the top */
+            min-height: 100vh; /* Full viewport height */
+            margin: 0;
+            background-color: #f0f2f5; /* Light background */
             padding: 20px;
-            margin-top: 30px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px; /* Max width for better mobile display */
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 15px; /* Rounded corners for the main app container */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+
+        #reportBox {
+            /* Moved to the top, outside the main button area */
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 25px; /* Space below report box */
+            border-radius: 10px;
+            background-color: #e9ecef;
+            width: 100%; /* Take full width of parent */
+            box-sizing: border-box;
             display: none; /* Hidden by default */
-            width: 300px;
-            margin-left: auto;
-            margin-right: auto;
+            text-align: left; /* Align text within report box */
+        }
+
+        #reportBox h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.1em;
+            border-bottom: 1px solid #d0d0d0;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        #reportBox p {
+            margin: 5px 0;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        #reportBox span {
+            font-weight: bold;
+            color: #007bff; /* Highlight values */
+        }
+
+        #timerDisplay {
+            font-size: 3.5em; /* Larger timer */
+            margin-bottom: 30px;
+            font-weight: bold;
+            color: #343a40;
+            letter-spacing: 1px;
+            width: 100%; /* Ensure it takes full width */
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center;
+            gap: 15px; /* Space between buttons */
+            width: 100%;
+        }
+
+        button {
+            padding: 15px 25px; /* Larger padding for buttons */
+            font-size: 1.3em; /* Larger font for buttons */
+            border: none;
+            border-radius: 10px; /* More rounded corners */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transitions */
+            font-weight: bold;
+            color: #fff; /* White text for buttons */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+            /* --- CRITICAL TOUCH/SELECTION FIXES --- */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            /* --- END CRITICAL FIXES --- */
+        }
+
+        #startButton {
+            background-color: #28a745; /* Green */
+        }
+        #startButton:active {
+            transform: scale(0.98); /* Slight press effect */
+            background-color: #218838;
+        }
+
+        #freezeButton {
+            background-color: #007bff; /* Blue */
+            flex-grow: 1; /* Allow it to take more space */
+            min-width: 180px; /* Ensure it's large enough */
+        }
+        #freezeButton:active {
+            transform: scale(0.98);
+            background-color: #0056b3;
+        }
+        /* Style for when freezeButton is actively pressed (red) */
+        #freezeButton[style*="background-color: red"] {
+            background-color: #dc3545 !important; /* Red */
+        }
+
+
+        #stopButton {
+            background-color: #dc3545; /* Red */
+        }
+        #stopButton:active {
+            transform: scale(0.98);
+            background-color: #c82333;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            #timerDisplay {
+                font-size: 2.5em;
+            }
+            button {
+                font-size: 1.1em;
+                padding: 12px 20px;
+                flex-basis: 100%; /* Stack buttons on very small screens */
+            }
+            #freezeButton {
+                min-width: unset; /* Remove min-width to allow full stacking */
+            }
+            #app {
+                padding: 15px;
+            }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <div id="timerDisplay">00:00:00.000</div>
-        <button id="startButton">Start</button>
-        <button id="freezeButton" disabled>Record Freeze</button>
-        <button id="stopButton" disabled>Stop</button>
+        <!-- Report Box is now at the top -->
         <div id="reportBox">
             <h3>Report:</h3>
             <p>Total Trial Time: <span id="totalTrialTime"></span></p>
             <p>Number of Freezes: <span id="numberOfFreezes"></span></p>
             <p>% of Trial Spent Frozen: <span id="percentFrozen"></span></p>
             <p>Time Spent Frozen: <span id="timeSpentFrozen"></span></p>
+        </div>
+
+        <div id="timerDisplay">00:00:00.000</div>
+
+        <div class="button-container">
+            <button id="startButton">Start</button>
+            <button id="freezeButton" disabled>Record Freeze</button>
+            <button id="stopButton" disabled>Stop</button>
         </div>
     </div>
     <script src="script.js"></script>
