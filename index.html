@@ -175,7 +175,10 @@
         #freezeButton {
             background-color: #007bff;
             flex-grow: 1;
-            min-width: 180px;
+            /* Increased padding and font size for easier pressing */
+            padding: 25px 35px; /* Increased padding */
+            font-size: 1.8em;  /* Increased font size */
+            min-width: 220px; /* Ensure a good minimum width */
         }
         #freezeButton:active {
             transform: scale(0.98);
@@ -212,6 +215,9 @@
             }
             #freezeButton {
                 min-width: unset;
+                /* Adjust for smaller screens */
+                padding: 20px 30px; /* Slightly less padding on small screens */
+                font-size: 1.5em; /* Slightly smaller font on small screens */
             }
             #app {
                 padding: 15px;
