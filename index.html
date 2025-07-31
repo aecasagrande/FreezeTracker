@@ -29,6 +29,7 @@
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px; /* Add margin to separate from new export button */
         }
 
         .input-group {
@@ -280,6 +281,20 @@
             transform: none;
         }
 
+        #exportDataButton {
+            background-color: #17a2b8; /* Teal color for export */
+            margin-top: 20px;
+            width: 100%;
+            max-width: 450px; /* Match app width */
+            padding: 15px 25px;
+            font-size: 1.2em;
+        }
+
+        #exportDataButton:active {
+            background-color: #138496;
+            transform: scale(0.98);
+        }
+
         /* Responsive adjustments */
         @media (max-width: 600px) {
             #timerDisplay {
@@ -305,6 +320,10 @@
             .freeze-actions button {
                 padding: 4px 8px;
                 font-size: 0.75em;
+            }
+            #exportDataButton {
+                font-size: 1.1em;
+                padding: 12px 20px;
             }
         }
     </style>
@@ -354,6 +373,9 @@
             <button id="stopButton" disabled>Stop Trial</button>
         </div>
     </div>
+
+    <button id="exportDataButton">Export All Trials to CSV</button>
+
     <script src="script.js"></script>
 </body>
 </html>
