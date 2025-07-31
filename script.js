@@ -585,4 +585,46 @@ function exportDataToCsv() {
 
     // Dynamic filename: PatientID_Export_YYYYMMDD_HHMM.csv
     const now = new Date();
-    const dateString = `${now.getFullYear
+    const dateString = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+    const timeString = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+    const patientIdForFilename = patientIdInput.value.trim().replace(/\s/g, '_') || 'UnknownPatient'; // Replace spaces with underscores
+    link.setAttribute('download', `${patientIdForFilename}_FoG_Data_${dateString}_${timeString}.csv`);
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Clean up the URL object
+
+    console.log('Data exported to CSV.');
+}
+
+
+// --- Event Listeners ---
+startButton.addEventListener('click', startStopwatch);
+
+// Mouse Events
+freezeButton.addEventListener('mousedown', recordFreezeStart);
+freezeButton.addEventListener('mouseup', recordFreezeEnd);
+freezeButton.addEventListener('mouseleave', recordFreezeEnd); // In case mouse leaves button while held
+
+// Touch Events
+freezeButton.addEventListener('touchstart', recordFreezeStart);
+freezeButton.addEventListener('touchend', recordFreezeEnd);
+freezeButton.addEventListener('touchcancel', recordFreezeEnd); // In case touch is cancelled/interrupted
+
+stopButton.addEventListener('click', stopStopwatch);
+
+// Trial Number Button Listeners
+decrementTrialButton.addEventListener('click', decrementTrial);
+incrementTrialButton.addEventListener('click', incrementTrial);
+
+// New Export Button Listener
+exportDataButton.addEventListener('click', exportDataToCsv);
+
+// Ensure trial number input updates correctly if typed
+trialNumberInput.addEventListener('change', updateTrialNumberInput);
+trialNumberInput.addEventListener('input', updateTrialNumberInput);
+
+// Initial call to ensure trial number is valid on load and load existing data
+updateTrialNumberInput();
+loadTrialsData(); // Load any previously stored data when the app starts
