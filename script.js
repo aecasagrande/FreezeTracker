@@ -10,6 +10,9 @@ let freezePressStartTime = 0; // Absolute timestamp when the freeze button was p
 let freezeEvents = [];
 let nextFreezeId = 0; // Simple counter for unique IDs for each freeze event
 
+// Global array to store data for all completed trials
+let allTrialsData = []; // This will hold objects for each completed trial
+
 // DOM Elements
 const timerDisplay = document.getElementById('timerDisplay');
 const startButton = document.getElementById('startButton');
@@ -19,7 +22,7 @@ const stopButton = document.getElementById('stopButton');
 const reportBox = document.getElementById('reportBox');
 const totalTrialTimeSpan = document.getElementById('totalTrialTime');
 const numberOfFreezesSpan = document.getElementById('numberOfFreezes');
-const percentFrozenSpan = document = document.getElementById('percentFrozen'); // Corrected typo here
+const percentFrozenSpan = document.getElementById('percentFrozen'); 
 const timeSpentFrozenSpan = document.getElementById('timeSpentFrozen');
 const freezeListContainer = document.getElementById('freezeListContainer');
 const freezeList = document.getElementById('freezeList'); // Container for individual freeze items
@@ -36,9 +39,13 @@ const reportTrialNumberSpan = document.getElementById('reportTrialNumber');
 const cumulativeFoGGradeSpan = document.getElementById('cumulativeFoGGrade');
 const frequencyFoGGradeSpan = document.getElementById('frequencyFoGGrade');
 
+// New Export Button
+const exportDataButton = document.getElementById('exportDataButton');
+
 
 // --- Helper Functions ---
 
+// Formats milliseconds into HH:MM:SS.ms (e.g., 00:01:23.456)
 function formatTime(ms) {
     if (ms < 0) ms = 0; // Ensure no negative times
     const hours = Math.floor(ms / 3600000);
@@ -47,6 +54,44 @@ function formatTime(ms) {
     const milliseconds = ms % 1000;
 
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+}
+
+// NEW HELPER: Formats a Date object into HH:MM:SS.ms of the day
+function formatTimeOfDay(dateObj) {
+    if (!dateObj) return '';
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+    const milliseconds = String(dateObj.getMilliseconds()).padStart(3, '0');
+    return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
+
+// Helper to format Date objects to ISO string for CSV (kept for filename if needed, or if user changes mind)
+function formatTimestampISO(dateObj) {
+    return dateObj ? dateObj.toISOString() : '';
+}
+
+
+// --- Local Storage Functions ---
+
+function loadTrialsData() {
+    const storedData = localStorage.getItem('allTrialsData');
+    if (storedData) {
+        try {
+            allTrialsData = JSON.parse(storedData);
+            console.log('Loaded data from localStorage:', allTrialsData);
+        } catch (e) {
+            console.error('Error parsing stored data:', e);
+            allTrialsData = []; // Reset if parsing fails
+        }
+    } else {
+        allTrialsData = [];
+    }
+}
+
+function saveTrialsData() {
+    localStorage.setItem('allTrialsData', JSON.stringify(allTrialsData));
+    console.log('Data saved to localStorage.');
 }
 
 // --- Trial Number Functions ---
@@ -93,7 +138,7 @@ function startStopwatch() {
     decrementTrialButton.disabled = true;
     incrementTrialButton.disabled = true;
 
-    startTime = Date.now();
+    startTime = Date.now(); // Record absolute start time
     isRunning = true;
     freezePressStartTime = 0;
     freezeEvents = []; // Reset freeze events array for the new trial
@@ -110,7 +155,7 @@ function startStopwatch() {
         timerDisplay.textContent = formatTime(elapsedTime);
     }, 10);
 
-    console.log(`Trial started for Patient ID: ${patientId}, Trial #: ${trialNumber}`);
+    console.log(`Trial started for Patient ID: ${patientId}, Trial #: ${trialNumber} at ${formatTimeOfDay(new Date(startTime))}`);
 }
 
 // Unified function for both mouse down and touch start
@@ -125,7 +170,7 @@ function recordFreezeStart(event) {
 
     freezePressStartTime = Date.now(); // Record absolute start time
     freezeButton.style.backgroundColor = 'red';
-    console.log('Freeze button pressed. Start time:', freezePressStartTime);
+    console.log('Freeze button pressed. Start time (absolute):', formatTimeOfDay(new Date(freezePressStartTime)));
 
     // Vibrate the device with a single pulse (200ms)
     if (navigator.vibrate) {
@@ -168,7 +213,7 @@ function recordFreezeEnd(event) {
 function stopStopwatch() {
     if (!isRunning) return;
 
-    const trialEndTime = Date.now();
+    const trialEndTime = Date.now(); // Record absolute end time
     clearInterval(timerInterval);
     isRunning = false;
 
@@ -195,7 +240,36 @@ function stopStopwatch() {
     totalTrialTimeMs = trialEndTime - startTime; // Store total trial time
 
     // Calculate and Display Report (initial display)
-    updateReportAndFreezeList();
+    updateReportAndFreezeList(); // This also populates report fields and calls renderFreezeList()
+
+    // Package trial data for storage
+    const patientId = patientIdInput.value.trim();
+    const trialNumber = parseInt(trialNumberInput.value);
+    let currentTotalFreezeDuration = 0;
+    freezeEvents.forEach(event => { currentTotalFreezeDuration += event.durationMs; });
+    const currentFreezeCount = freezeEvents.length;
+    const percentFrozen = (totalTrialTimeMs > 0) ? (currentTotalFreezeDuration / totalTrialTimeMs) * 100 : 0;
+    const { cumulativeGrade, frequencyGrade } = classifyFoG(totalTrialTimeMs, currentTotalFreezeDuration, currentFreezeCount, freezeEvents);
+
+
+    // Create a deep copy of freezeEvents to store it, so future edits don't affect past records
+    const freezesForStorage = JSON.parse(JSON.stringify(freezeEvents));
+
+    const trialData = {
+        patientId: patientId,
+        trialNumber: trialNumber,
+        trialStartTimestamp: startTime, // Absolute timestamp (milliseconds since epoch)
+        trialEndTimestamp: trialEndTime,   // Absolute timestamp (milliseconds since epoch)
+        totalTrialDurationMs: totalTrialTimeMs,
+        numberOfFreezes: currentFreezeCount,
+        totalTimeFrozenMs: currentTotalFreezeDuration,
+        percentTrialFrozen: percentFrozen,
+        cumulativeFoGGrade: cumulativeGrade,
+        frequencyFoGGrade: frequencyGrade,
+        freezeEvents: freezesForStorage // Array of individual freeze objects
+    };
+    allTrialsData.push(trialData);
+    saveTrialsData(); // Save to local storage after each trial
 
     // Enable inputs and hide main action buttons
     patientIdInput.disabled = false;
@@ -211,8 +285,9 @@ function stopStopwatch() {
     freezeListContainer.style.display = 'block'; // CRUCIAL: Ensure this is set to block here!
 
     console.log(`Stopwatch stopped. Report generated.`);
-    // Updated console.log to reflect the new structure
     console.log('Freeze Events (full data):', freezeEvents); 
+    console.log('Stored Trial Data:', trialData);
+
 
     // After stopping, automatically increment trial number for next run
     incrementTrial(); 
@@ -259,7 +334,6 @@ function renderFreezeList() {
         freezeItem.className = 'freeze-item';
         freezeItem.dataset.id = event.id; // Store unique ID for easy lookup
 
-        // THIS IS THE KEY FIX: Ensure the duration is rendered correctly here.
         freezeItem.innerHTML = `
             <span>Freeze ${index + 1}: <span class="freeze-duration">${formatTime(event.durationMs)}</span></span>
             <div class="freeze-actions">
@@ -330,7 +404,9 @@ function editFreeze(buttonElement) {
         // Re-calculate endMs based on new duration, assuming startMs is fixed
         freeze.endMs = freeze.startMs + newDurationMs; 
 
-        updateReportAndFreezeList(); // Re-render and recalculate
+        // Update the report and list. Crucially, also save to local storage.
+        updateReportAndFreezeList();
+        saveTrialsData(); 
     };
 
     actionsDiv.querySelector('.cancel-edit-btn').onclick = () => {
@@ -369,7 +445,9 @@ function deleteFreeze(buttonElement) {
     // Remove the freeze from the array
     freezeEvents.splice(indexToDelete, 1);
     
-    updateReportAndFreezeList(); // Re-render and recalculate
+    // Update the report and list. Crucially, also save to local storage.
+    updateReportAndFreezeList();
+    saveTrialsData();
 }
 
 
@@ -429,28 +507,82 @@ function classifyFoG(totalTrialTimeMs, totalFreezeDurationMs, freezeCount, freez
 }
 
 
-// --- Event Listeners ---
-startButton.addEventListener('click', startStopwatch);
+// --- CSV Export Function ---
 
-// Mouse Events
-freezeButton.addEventListener('mousedown', recordFreezeStart);
-freezeButton.addEventListener('mouseup', recordFreezeEnd);
-freezeButton.addEventListener('mouseleave', recordFreezeEnd); // In case mouse leaves button while held
+function exportDataToCsv() {
+    if (allTrialsData.length === 0) {
+        alert('No trial data available to export.');
+        return;
+    }
 
-// Touch Events
-freezeButton.addEventListener('touchstart', recordFreezeStart);
-freezeButton.addEventListener('touchend', recordFreezeEnd);
-freezeButton.addEventListener('touchcancel', recordFreezeEnd); // In case touch is cancelled/interrupted
+    // Updated headers to reflect new time formatting and added absolute timestamps for Freeze Start/End
+    const headers = [
+        'Patient_ID', 'Trial_Number', 
+        'Trial_Start_Time_of_Day', 'Trial_End_Time_of_Day', // New: Time of day
+        'Trial_Start_Timestamp_ISO', 'Trial_End_Timestamp_ISO', // Original: ISO for full timestamp
+        'Trial_Duration_ms', 'Trial_Duration_Formatted',
+        'Total_Freezes_Count', 'Total_Freeze_Duration_ms', 'Total_Freeze_Duration_Formatted', 'Percent_Trial_Frozen',
+        'FoG_Cumulative_Grade', 'FoG_Frequency_Grade',
+        'Freeze_Event_ID', 
+        'Freeze_Start_Relative_ms', 'Freeze_End_Relative_ms', 'Freeze_Duration_ms', 'Freeze_Start_Relative_Formatted',
+        'Freeze_Start_Time_of_Day', 'Freeze_End_Time_of_Day' // New: Freeze Time of Day
+    ];
 
-stopButton.addEventListener('click', stopStopwatch);
+    let csvRows = [];
+    csvRows.push(headers.join(',')); // Add headers to the CSV
 
-// Trial Number Button Listeners
-decrementTrialButton.addEventListener('click', decrementTrial);
-incrementTrialButton.addEventListener('click', incrementTrial);
+    allTrialsData.forEach(trial => {
+        const trialStartAbsoluteDate = new Date(trial.trialStartTimestamp);
+        const trialEndAbsoluteDate = new Date(trial.trialEndTimestamp);
 
-// Ensure trial number input updates correctly if typed
-trialNumberInput.addEventListener('change', updateTrialNumberInput);
-trialNumberInput.addEventListener('input', updateTrialNumberInput);
+        // Base row data for the trial (repeated for each freeze event)
+        const baseTrialData = [
+            `"${trial.patientId}"`, // Enclose in quotes for safety with potential commas/spaces
+            trial.trialNumber,
+            formatTimeOfDay(trialStartAbsoluteDate), // New time of day column
+            formatTimeOfDay(trialEndAbsoluteDate),   // New time of day column
+            formatTimestampISO(trialStartAbsoluteDate), // Original ISO timestamp
+            formatTimestampISO(trialEndAbsoluteDate),   // Original ISO timestamp
+            trial.totalTrialDurationMs,
+            formatTime(trial.totalTrialDurationMs),
+            trial.numberOfFreezes,
+            trial.totalTimeFrozenMs,
+            formatTime(trial.totalTimeFrozenMs),
+            trial.percentTrialFrozen.toFixed(2),
+            `"${trial.cumulativeFoGGrade}"`,
+            `"${trial.frequencyFoGGrade}"`
+        ];
 
-// Initial call to ensure trial number is valid on load
-updateTrialNumberInput();
+        if (trial.freezeEvents && trial.freezeEvents.length > 0) {
+            trial.freezeEvents.forEach(freeze => {
+                // Calculate absolute freeze start/end times for time of day formatting
+                const freezeStartAbsoluteDate = new Date(trial.trialStartTimestamp + freeze.startMs);
+                const freezeEndAbsoluteDate = new Date(trial.trialStartTimestamp + freeze.endMs);
+
+                const freezeData = [
+                    freeze.id,
+                    freeze.startMs,
+                    freeze.endMs,
+                    freeze.durationMs,
+                    formatTime(freeze.startMs),
+                    formatTimeOfDay(freezeStartAbsoluteDate), // New freeze time of day
+                    formatTimeOfDay(freezeEndAbsoluteDate)    // New freeze time of day
+                ];
+                csvRows.push(baseTrialData.concat(freezeData).join(','));
+            });
+        } else {
+            // If no freezes, still include the trial data with blank freeze specific columns
+            const freezeData = ['', '', '', '', '', '', '']; // Blanks for new freeze columns
+            csvRows.push(baseTrialData.concat(freezeData).join(','));
+        }
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+
+    // Dynamic filename: PatientID_Export_YYYYMMDD_HHMM.csv
+    const now = new Date();
+    const dateString = `${now.getFullYear
