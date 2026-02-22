@@ -47,8 +47,9 @@
             font-weight: bold;
         }
 
-        /* Added select to the shared input styles */
+        /* Added select here so the dropdown matches the text input perfectly */
         .input-group input[type="text"],
+        .input-group input[type="number"],
         .input-group select {
             width: 100%;
             padding: 10px;
@@ -147,10 +148,13 @@
 
         .freeze-actions .edit-btn { background-color: #ffc107; color: #333; }
         .freeze-actions .edit-btn:active { background-color: #e0a800; }
+
         .freeze-actions .delete-btn { background-color: #dc3545; color: #fff; }
         .freeze-actions .delete-btn:active { background-color: #c82333; }
+
         .freeze-actions .save-edit-btn { background-color: #28a745; color: #fff; }
         .freeze-actions .save-edit-btn:active { background-color: #218838; }
+
         .freeze-actions .cancel-edit-btn { background-color: #6c757d; color: #fff; }
         .freeze-actions .cancel-edit-btn:active { background-color: #5a6268; }
 
@@ -225,7 +229,11 @@
             padding: 15px 25px;
             font-size: 1.2em;
         }
-        #exportDataButton:active { background-color: #138496; transform: scale(0.98); }
+
+        #exportDataButton:active {
+            background-color: #138496;
+            transform: scale(0.98);
+        }
 
         @media (max-width: 600px) {
             #timerDisplay { font-size: 2.5em; }
@@ -246,31 +254,35 @@
         </div>
 
         <div class="input-group">
-            <label for="medState">Medication State:</label>
-            <select id="medState">
-                <option value="OFF">OFF</option>
-                <option value="ON">ON</option>
-            </select>
-        </div>
-
-        <div class="input-group">
-            <label for="taskName">Task:</label>
-            <select id="taskName">
-                <option value="Giladi_Walk">Walk</option>
-                <option value="Giladi_DTWalk">Dual Task Walk</option>
-                <option value="Giladi_Carrying">Carrying</option>
-                <option value="Giladi_Turns">Turns</option>
-                <option value="Giladi_DTTurns">Dual Task Turns</option>
-                <option value="Giladi_Shuffle">Shuffle</option>
-                <option value="Giladi_Agility">Agility</option>
-                <option value="Giladi_Doorway">Doorway</option>
+            <label for="trialNumber">Task & Medication State:</label>
+            <select id="trialNumber">
+                <optgroup label="OFF State">
+                    <option value="OFF_Giladi_Walk">OFF_Giladi_Walk</option>
+                    <option value="OFF_Giladi_DTWalk">OFF_Giladi_DTWalk</option>
+                    <option value="OFF_Giladi_Carrying">OFF_Giladi_Carrying</option>
+                    <option value="OFF_Giladi_Turns">OFF_Giladi_Turns</option>
+                    <option value="OFF_Giladi_DTTurns">OFF_Giladi_DTTurns</option>
+                    <option value="OFF_Giladi_Shuffle">OFF_Giladi_Shuffle</option>
+                    <option value="OFF_Giladi_Agility">OFF_Giladi_Agility</option>
+                    <option value="OFF_Giladi_Doorway">OFF_Giladi_Doorway</option>
+                </optgroup>
+                <optgroup label="ON State">
+                    <option value="ON_Giladi_Walk">ON_Giladi_Walk</option>
+                    <option value="ON_Giladi_DTWalk">ON_Giladi_DTWalk</option>
+                    <option value="ON_Giladi_Carrying">ON_Giladi_Carrying</option>
+                    <option value="ON_Giladi_Turns">ON_Giladi_Turns</option>
+                    <option value="ON_Giladi_DTTurns">ON_Giladi_DTTurns</option>
+                    <option value="ON_Giladi_Shuffle">ON_Giladi_Shuffle</option>
+                    <option value="ON_Giladi_Agility">ON_Giladi_Agility</option>
+                    <option value="ON_Giladi_Doorway">ON_Giladi_Doorway</option>
+                </optgroup>
             </select>
         </div>
 
         <div id="reportBox">
             <h3>Trial Report:</h3>
             <p>Patient ID: <span id="reportPatientId"></span></p>
-            <p>Condition: <span id="reportCondition"></span></p>
+            <p>Trial / Task: <span id="reportTrialNumber"></span></p>
             <p>Total Trial Time: <span id="totalTrialTime"></span></p>
             <p>Number of Freezes: <span id="numberOfFreezes"></span></p>
             <p>% of Trial Spent Frozen: <span id="percentFrozen"></span></p>
@@ -282,7 +294,8 @@
 
             <div id="freezeListContainer">
                 <h4>Recorded Freezes:</h4>
-                <div id="freezeList"></div>
+                <div id="freezeList">
+                    </div>
             </div>
         </div>
 
