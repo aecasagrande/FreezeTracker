@@ -24,18 +24,18 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 450px; /* Slightly wider to accommodate new inputs */
+            max-width: 450px;
             background-color: #ffffff;
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px; /* Add margin to separate from new export button */
+            margin-bottom: 20px;
         }
 
         .input-group {
             display: flex;
-            flex-direction: column; /* Stack label and input */
-            align-items: flex-start; /* Align text to left */
+            flex-direction: column;
+            align-items: flex-start;
             width: 100%;
             margin-bottom: 15px;
         }
@@ -47,34 +47,17 @@
             font-weight: bold;
         }
 
+        /* Added select to the shared input styles */
         .input-group input[type="text"],
-        .input-group input[type="number"] {
+        .input-group select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 1.1em;
-            box-sizing: border-box; /* Include padding in width */
-        }
-
-        .trial-input-container {
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-
-        .trial-input-container button {
-            padding: 8px 15px;
-            font-size: 1.2em;
-            margin: 0 5px; /* Space around +/- buttons */
-            background-color: #6c757d; /* Grey for +/- */
-            color: white;
-            border-radius: 8px;
-            box-shadow: none; /* No shadow on these small buttons */
-        }
-        .trial-input-container button:active {
-            background-color: #5a6268;
-            transform: scale(0.95);
+            box-sizing: border-box;
+            background-color: #fff;
+            cursor: pointer;
         }
 
         #reportBox {
@@ -109,21 +92,19 @@
             color: #007bff;
         }
         
-        /* Specific styling for classification results */
         #reportBox .classification-result {
-            margin-top: 10px; /* Space above classification */
+            margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid #d0d0d0;
             font-size: 1em;
             color: #333;
         }
 
-        /* Freeze List Styling */
         #freezeListContainer {
             margin-top: 15px;
             border-top: 1px solid #d0d0d0;
             padding-top: 10px;
-            display: none; /* Hidden by default, shown by JS */
+            display: none;
         }
 
         #freezeListContainer h4 {
@@ -161,50 +142,26 @@
             margin-left: 5px;
             border-radius: 5px;
             box-shadow: none;
-            min-width: unset; /* Override general button styles */
+            min-width: unset;
         }
 
-        .freeze-actions .edit-btn {
-            background-color: #ffc107;
-            color: #333;
-        }
-        .freeze-actions .edit-btn:active {
-            background-color: #e0a800;
-        }
-
-        .freeze-actions .delete-btn {
-            background-color: #dc3545;
-            color: #fff;
-        }
-        .freeze-actions .delete-btn:active {
-            background-color: #c82333;
-        }
-
-        .freeze-actions .save-edit-btn {
-            background-color: #28a745;
-            color: #fff;
-        }
-        .freeze-actions .save-edit-btn:active {
-            background-color: #218838;
-        }
-
-        .freeze-actions .cancel-edit-btn {
-            background-color: #6c757d;
-            color: #fff;
-        }
-        .freeze-actions .cancel-edit-btn:active {
-            background-color: #5a6268;
-        }
+        .freeze-actions .edit-btn { background-color: #ffc107; color: #333; }
+        .freeze-actions .edit-btn:active { background-color: #e0a800; }
+        .freeze-actions .delete-btn { background-color: #dc3545; color: #fff; }
+        .freeze-actions .delete-btn:active { background-color: #c82333; }
+        .freeze-actions .save-edit-btn { background-color: #28a745; color: #fff; }
+        .freeze-actions .save-edit-btn:active { background-color: #218838; }
+        .freeze-actions .cancel-edit-btn { background-color: #6c757d; color: #fff; }
+        .freeze-actions .cancel-edit-btn:active { background-color: #5a6268; }
 
         .edit-input {
-            width: 70px; /* Adjust as needed */
+            width: 70px;
             padding: 4px;
             font-size: 0.9em;
             border-radius: 4px;
             border: 1px solid #ccc;
             margin-right: 5px;
         }
-
 
         #timerDisplay {
             font-size: 3.5em;
@@ -233,46 +190,25 @@
             font-weight: bold;
             color: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
 
-        #startButton {
-            background-color: #28a745;
-        }
-        #startButton:active {
-            transform: scale(0.98);
-            background-color: #218838;
-        }
+        #startButton { background-color: #28a745; }
+        #startButton:active { transform: scale(0.98); background-color: #218838; }
 
         #freezeButton {
             background-color: #007bff;
             flex-grow: 1;
-            padding: 25px 35px; /* Increased padding */
-            font-size: 1.8em;  /* Increased font size */
-            min-width: 220px; /* Ensure a good minimum width */
+            padding: 25px 35px;
+            font-size: 1.8em;
+            min-width: 220px;
         }
-        #freezeButton:active {
-            transform: scale(0.98);
-            background-color: #0056b3;
-        }
-        #freezeButton[style*="background-color: red"] {
-            background-color: #dc3545 !important;
-        }
+        #freezeButton:active { transform: scale(0.98); background-color: #0056b3; }
+        #freezeButton[style*="background-color: red"] { background-color: #dc3545 !important; }
 
-        #stopButton {
-            background-color: #dc3545;
-        }
-        #stopButton:active {
-            transform: scale(0.98);
-            background-color: #c82333;
-        }
+        #stopButton { background-color: #dc3545; }
+        #stopButton:active { transform: scale(0.98); background-color: #c82333; }
         
         button:disabled {
             background-color: #cccccc;
@@ -282,49 +218,22 @@
         }
 
         #exportDataButton {
-            background-color: #17a2b8; /* Teal color for export */
+            background-color: #17a2b8;
             margin-top: 20px;
             width: 100%;
-            max-width: 450px; /* Match app width */
+            max-width: 450px;
             padding: 15px 25px;
             font-size: 1.2em;
         }
+        #exportDataButton:active { background-color: #138496; transform: scale(0.98); }
 
-        #exportDataButton:active {
-            background-color: #138496;
-            transform: scale(0.98);
-        }
-
-        /* Responsive adjustments */
         @media (max-width: 600px) {
-            #timerDisplay {
-                font-size: 2.5em;
-            }
-            button {
-                font-size: 1.1em;
-                padding: 12px 20px;
-                flex-basis: 100%;
-            }
-            #freezeButton {
-                min-width: unset;
-                padding: 20px 30px; /* Slightly less padding on small screens */
-                font-size: 1.5em; /* Slightly smaller font on small screens */
-            }
-            #app {
-                padding: 15px;
-            }
-            .trial-input-container button {
-                padding: 6px 12px;
-                font-size: 1em;
-            }
-            .freeze-actions button {
-                padding: 4px 8px;
-                font-size: 0.75em;
-            }
-            #exportDataButton {
-                font-size: 1.1em;
-                padding: 12px 20px;
-            }
+            #timerDisplay { font-size: 2.5em; }
+            button { font-size: 1.1em; padding: 12px 20px; flex-basis: 100%; }
+            #freezeButton { min-width: unset; padding: 20px 30px; font-size: 1.5em; }
+            #app { padding: 15px; }
+            .freeze-actions button { padding: 4px 8px; font-size: 0.75em; }
+            #exportDataButton { font-size: 1.1em; padding: 12px 20px; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
@@ -337,18 +246,31 @@
         </div>
 
         <div class="input-group">
-            <label for="trialNumber">Trial #:</label>
-            <div class="trial-input-container">
-                <button id="decrementTrial">-</button>
-                <input type="number" id="trialNumber" value="1" min="1" step="1" readonly>
-                <button id="incrementTrial">+</button>
-            </div>
+            <label for="medState">Medication State:</label>
+            <select id="medState">
+                <option value="OFF">OFF</option>
+                <option value="ON">ON</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="taskName">Task:</label>
+            <select id="taskName">
+                <option value="Giladi_Walk">Walk</option>
+                <option value="Giladi_DTWalk">Dual Task Walk</option>
+                <option value="Giladi_Carrying">Carrying</option>
+                <option value="Giladi_Turns">Turns</option>
+                <option value="Giladi_DTTurns">Dual Task Turns</option>
+                <option value="Giladi_Shuffle">Shuffle</option>
+                <option value="Giladi_Agility">Agility</option>
+                <option value="Giladi_Doorway">Doorway</option>
+            </select>
         </div>
 
         <div id="reportBox">
             <h3>Trial Report:</h3>
             <p>Patient ID: <span id="reportPatientId"></span></p>
-            <p>Trial #: <span id="reportTrialNumber"></span></p>
+            <p>Condition: <span id="reportCondition"></span></p>
             <p>Total Trial Time: <span id="totalTrialTime"></span></p>
             <p>Number of Freezes: <span id="numberOfFreezes"></span></p>
             <p>% of Trial Spent Frozen: <span id="percentFrozen"></span></p>
@@ -360,8 +282,7 @@
 
             <div id="freezeListContainer">
                 <h4>Recorded Freezes:</h4>
-                <div id="freezeList">
-                    </div>
+                <div id="freezeList"></div>
             </div>
         </div>
 
