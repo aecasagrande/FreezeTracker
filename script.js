@@ -27,13 +27,11 @@ const timeSpentFrozenSpan = document.getElementById('timeSpentFrozen');
 const freezeListContainer = document.getElementById('freezeListContainer');
 const freezeList = document.getElementById('freezeList'); // Container for individual freeze items
 
-// Patient ID and Trial Number Elements
+// Patient ID and Trial/Task Elements
 const patientIdInput = document.getElementById('patientId');
-const trialNumberInput = document.getElementById('trialNumber');
-const decrementTrialButton = document.getElementById('decrementTrial');
-const incrementTrialButton = document.getElementById('incrementTrial');
+const trialNumberInput = document.getElementById('trialNumber'); // This is now a dropdown menu
 
-// Report spans for Patient ID, Trial #, and FoG grades
+// Report spans for Patient ID, Trial/Task, and FoG grades
 const reportPatientIdSpan = document.getElementById('reportPatientId');
 const reportTrialNumberSpan = document.getElementById('reportTrialNumber');
 const cumulativeFoGGradeSpan = document.getElementById('cumulativeFoGGrade');
@@ -66,11 +64,10 @@ function formatTimeOfDay(dateObj) {
     return `${hours}:${minutes}:${seconds}.${milliseconds}`;
 }
 
-// Helper to format Date objects to ISO string for CSV (kept for filename if needed, or if user changes mind)
+// Helper to format Date objects to ISO string for CSV
 function formatTimestampISO(dateObj) {
     return dateObj ? dateObj.toISOString() : '';
 }
-
 
 // --- Local Storage Functions ---
 
@@ -94,49 +91,23 @@ function saveTrialsData() {
     console.log('Data saved to localStorage.');
 }
 
-// --- Trial Number Functions ---
-
-function updateTrialNumberInput() {
-    trialNumberInput.value = parseInt(trialNumberInput.value);
-    if (trialNumberInput.value < 1) {
-        trialNumberInput.value = 1;
-    }
-}
-
-function incrementTrial() {
-    trialNumberInput.value = parseInt(trialNumberInput.value) + 1;
-    updateTrialNumberInput();
-}
-
-function decrementTrial() {
-    trialNumberInput.value = parseInt(trialNumberInput.value) - 1;
-    updateTrialNumberInput();
-}
-
-
 // --- Core Stopwatch Functions ---
 
 function startStopwatch() {
     if (isRunning) return;
 
-    // Validate Patient ID and Trial Number
+    // Validate Patient ID and grab the Task Selection
     const patientId = patientIdInput.value.trim();
-    const trialNumber = parseInt(trialNumberInput.value);
+    const trialNumber = trialNumberInput.value; // Grabs string like "OFF_Giladi_Walk"
 
     if (!patientId) {
         alert("Please enter a Patient ID to start the trial.");
-        return;
-    }
-    if (isNaN(trialNumber) || trialNumber < 1) {
-        alert("Please enter a valid Trial # (a number greater than 0).");
         return;
     }
 
     // Disable inputs during trial
     patientIdInput.disabled = true;
     trialNumberInput.disabled = true;
-    decrementTrialButton.disabled = true;
-    incrementTrialButton.disabled = true;
 
     startTime = Date.now(); // Record absolute start time
     isRunning = true;
@@ -155,7 +126,7 @@ function startStopwatch() {
         timerDisplay.textContent = formatTime(elapsedTime);
     }, 10);
 
-    console.log(`Trial started for Patient ID: ${patientId}, Trial #: ${trialNumber} at ${formatTimeOfDay(new Date(startTime))}`);
+    console.log(`Trial started for Patient ID: ${patientId}, Task: ${trialNumber} at ${formatTimeOfDay(new Date(startTime))}`);
 }
 
 // Unified function for both mouse down and touch start
@@ -244,7 +215,7 @@ function stopStopwatch() {
 
     // Package trial data for storage
     const patientId = patientIdInput.value.trim();
-    const trialNumber = parseInt(trialNumberInput.value);
+    const trialNumber = trialNumberInput.value; // Grabs the task string
     let currentTotalFreezeDuration = 0;
     freezeEvents.forEach(event => { currentTotalFreezeDuration += event.durationMs; });
     const currentFreezeCount = freezeEvents.length;
@@ -257,9 +228,9 @@ function stopStopwatch() {
 
     const trialData = {
         patientId: patientId,
-        trialNumber: trialNumber,
-        trialStartTimestamp: startTime, // Absolute timestamp (milliseconds since epoch)
-        trialEndTimestamp: trialEndTime,   // Absolute timestamp (milliseconds since epoch)
+        trialNumber: trialNumber, // Stores the task string (e.g., "ON_Giladi_Walk")
+        trialStartTimestamp: startTime,
+        trialEndTimestamp: trialEndTime,
         totalTrialDurationMs: totalTrialTimeMs,
         numberOfFreezes: currentFreezeCount,
         totalTimeFrozenMs: currentTotalFreezeDuration,
@@ -274,8 +245,6 @@ function stopStopwatch() {
     // Enable inputs and hide main action buttons
     patientIdInput.disabled = false;
     trialNumberInput.disabled = false;
-    decrementTrialButton.disabled = false;
-    incrementTrialButton.disabled = false;
     
     startButton.disabled = false; // Re-enable start button
     freezeButton.disabled = true; // Keep freeze button disabled
@@ -288,9 +257,11 @@ function stopStopwatch() {
     console.log('Freeze Events (full data):', freezeEvents); 
     console.log('Stored Trial Data:', trialData);
 
-
-    // After stopping, automatically increment trial number for next run
-    incrementTrial(); 
+    // Auto-advance to the next task in the dropdown after stopping
+    const currentIndex = trialNumberInput.selectedIndex;
+    if (currentIndex < trialNumberInput.options.length - 1) {
+        trialNumberInput.selectedIndex = currentIndex + 1;
+    }
 }
 
 // --- Freeze List Management and Report Update ---
@@ -306,7 +277,7 @@ function updateReportAndFreezeList() {
 
     // Update Report Spans
     reportPatientIdSpan.textContent = patientIdInput.value.trim();
-    reportTrialNumberSpan.textContent = parseInt(trialNumberInput.value);
+    reportTrialNumberSpan.textContent = trialNumberInput.value; // Display task string
     totalTrialTimeSpan.textContent = formatTime(totalTrialTimeMs);
     numberOfFreezesSpan.textContent = currentFreezeCount;
     percentFrozenSpan.textContent = `${percentFrozen.toFixed(2)}%`;
@@ -517,7 +488,7 @@ function exportDataToCsv() {
 
     // Updated headers to reflect new time formatting and added absolute timestamps for Freeze Start/End
     const headers = [
-        'Patient_ID', 'Trial_Number', 
+        'Patient_ID', 'Task', // Updated from Trial_Number to Task
         'Trial_Start_Time_of_Day', 'Trial_End_Time_of_Day', // New: Time of day
         'Trial_Start_Timestamp_ISO', 'Trial_End_Timestamp_ISO', // Original: ISO for full timestamp
         'Trial_Duration_ms', 'Trial_Duration_Formatted',
@@ -538,7 +509,7 @@ function exportDataToCsv() {
         // Base row data for the trial (repeated for each freeze event)
         const baseTrialData = [
             `"${trial.patientId}"`, // Enclose in quotes for safety with potential commas/spaces
-            trial.trialNumber,
+            `"${trial.trialNumber}"`, // Stores the task string now
             formatTimeOfDay(trialStartAbsoluteDate), // New time of day column
             formatTimeOfDay(trialEndAbsoluteDate),   // New time of day column
             formatTimestampISO(trialStartAbsoluteDate), // Original ISO timestamp
@@ -614,17 +585,8 @@ freezeButton.addEventListener('touchcancel', recordFreezeEnd); // In case touch 
 
 stopButton.addEventListener('click', stopStopwatch);
 
-// Trial Number Button Listeners
-decrementTrialButton.addEventListener('click', decrementTrial);
-incrementTrialButton.addEventListener('click', incrementTrial);
-
 // New Export Button Listener
 exportDataButton.addEventListener('click', exportDataToCsv);
 
-// Ensure trial number input updates correctly if typed
-trialNumberInput.addEventListener('change', updateTrialNumberInput);
-trialNumberInput.addEventListener('input', updateTrialNumberInput);
-
-// Initial call to ensure trial number is valid on load and load existing data
-updateTrialNumberInput();
+// Initial load of any existing data
 loadTrialsData(); // Load any previously stored data when the app starts
