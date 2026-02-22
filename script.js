@@ -25,13 +25,14 @@ const numberOfFreezesSpan = document.getElementById('numberOfFreezes');
 const percentFrozenSpan = document.getElementById('percentFrozen');
 const timeSpentFrozenSpan = document.getElementById('timeSpentFrozen');
 const freezeListContainer = document.getElementById('freezeListContainer');
-const freezeList = document.getElementById('freezeList'); // Container for individual freeze items
+const freezeList = document.getElementById('freezeList'); 
 
-// Patient ID and Trial/Task Elements
+// Patient ID, State, and Task Elements
 const patientIdInput = document.getElementById('patientId');
-const trialNumberInput = document.getElementById('trialNumber'); // This is now a dropdown menu
+const medStateInput = document.getElementById('medState'); // New dropdown
+const taskNameInput = document.getElementById('taskName'); // New dropdown
 
-// Report spans for Patient ID, Trial/Task, and FoG grades
+// Report spans
 const reportPatientIdSpan = document.getElementById('reportPatientId');
 const reportTrialNumberSpan = document.getElementById('reportTrialNumber');
 const cumulativeFoGGradeSpan = document.getElementById('cumulativeFoGGrade');
@@ -40,21 +41,17 @@ const frequencyFoGGradeSpan = document.getElementById('frequencyFoGGrade');
 // New Export Button
 const exportDataButton = document.getElementById('exportDataButton');
 
-
 // --- Helper Functions ---
 
-// Formats milliseconds into HH:MM:SS.ms (e.g., 00:01:23.456)
 function formatTime(ms) {
-    if (ms < 0) ms = 0; // Ensure no negative times
+    if (ms < 0) ms = 0; 
     const hours = Math.floor(ms / 3600000);
     const minutes = Math.floor((ms % 3600000) / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     const milliseconds = ms % 1000;
-
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
 }
 
-// NEW HELPER: Formats a Date object into HH:MM:SS.ms of the day
 function formatTimeOfDay(dateObj) {
     if (!dateObj) return '';
     const hours = String(dateObj.getHours()).padStart(2, '0');
@@ -64,7 +61,6 @@ function formatTimeOfDay(dateObj) {
     return `${hours}:${minutes}:${seconds}.${milliseconds}`;
 }
 
-// Helper to format Date objects to ISO string for CSV
 function formatTimestampISO(dateObj) {
     return dateObj ? dateObj.toISOString() : '';
 }
@@ -79,7 +75,7 @@ function loadTrialsData() {
             console.log('Loaded data from localStorage:', allTrialsData);
         } catch (e) {
             console.error('Error parsing stored data:', e);
-            allTrialsData = []; // Reset if parsing fails
+            allTrialsData = []; 
         }
     } else {
         allTrialsData = [];
@@ -96,9 +92,9 @@ function saveTrialsData() {
 function startStopwatch() {
     if (isRunning) return;
 
-    // Validate Patient ID and grab the Task Selection
     const patientId = patientIdInput.value.trim();
-    const trialNumber = trialNumberInput.value; // Grabs string like "OFF_Giladi_Walk"
+    // Combine the state and task to create "OFF_Giladi_Walk"
+    const combinedTaskString = `${medStateInput.value}_${taskNameInput.value}`; 
 
     if (!patientId) {
         alert("Please enter a Patient ID to start the trial.");
@@ -107,64 +103,44 @@ function startStopwatch() {
 
     // Disable inputs during trial
     patientIdInput.disabled = true;
-    trialNumberInput.disabled = true;
+    medStateInput.disabled = true;
+    taskNameInput.disabled = true;
 
-    startTime = Date.now(); // Record absolute start time
+    startTime = Date.now(); 
     isRunning = true;
     freezePressStartTime = 0;
-    freezeEvents = []; // Reset freeze events array for the new trial
-    nextFreezeId = 0; // Reset ID counter
+    freezeEvents = []; 
+    nextFreezeId = 0; 
     
     startButton.disabled = true;
     freezeButton.disabled = false;
     stopButton.disabled = false;
-    reportBox.style.display = 'none'; // Hide report initially
-    freezeListContainer.style.display = 'none'; // Ensure this is hidden at start
+    reportBox.style.display = 'none'; 
+    freezeListContainer.style.display = 'none'; 
 
     timerInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         timerDisplay.textContent = formatTime(elapsedTime);
     }, 10);
 
-    console.log(`Trial started for Patient ID: ${patientId}, Task: ${trialNumber} at ${formatTimeOfDay(new Date(startTime))}`);
+    console.log(`Trial started for Patient ID: ${patientId}, Task: ${combinedTaskString} at ${formatTimeOfDay(new Date(startTime))}`);
 }
 
-// Unified function for both mouse down and touch start
 function recordFreezeStart(event) {
-    event.preventDefault(); // Prevent default touch behavior like scrolling
-    console.log('recordFreezeStart triggered by:', event.type);
+    event.preventDefault(); 
+    if (!isRunning || freezePressStartTime !== 0) return;
 
-    if (!isRunning || freezePressStartTime !== 0) {
-        console.log('Freeze start ignored (not running or already started):', { isRunning, freezePressStartTime });
-        return;
-    }
-
-    freezePressStartTime = Date.now(); // Record absolute start time
+    freezePressStartTime = Date.now(); 
     freezeButton.style.backgroundColor = 'red';
-    console.log('Freeze button pressed. Start time (absolute):', formatTimeOfDay(new Date(freezePressStartTime)));
 
-    // Vibrate the device with a single pulse (200ms)
-    if (navigator.vibrate) {
-        navigator.vibrate(200); // Vibrate for 200 milliseconds
-        console.log('Single vibration pulse!');
-    } else {
-        console.log('Vibration not supported or API unavailable.');
-    }
+    if (navigator.vibrate) navigator.vibrate(200); 
 }
 
-// Unified function for both mouse up and touch end/cancel
 function recordFreezeEnd(event) {
-    console.log('recordFreezeEnd triggered by:', event.type);
+    if (!isRunning || freezePressStartTime === 0) return;
 
-    if (!isRunning || freezePressStartTime === 0) {
-        console.log('Freeze end ignored (not running or no start time):', { isRunning, freezePressStartTime });
-        return;
-    }
-
-    const freezeEndTime = Date.now(); // Record absolute end time
+    const freezeEndTime = Date.now(); 
     const freezeDuration = freezeEndTime - freezePressStartTime;
-    
-    // Calculate relative times correctly for storage
     const freezeStartRelative = freezePressStartTime - startTime; 
     const freezeEndRelative = freezeEndTime - startTime;
 
@@ -177,18 +153,15 @@ function recordFreezeEnd(event) {
 
     freezePressStartTime = 0;
     freezeButton.style.backgroundColor = '';
-
-    console.log(`Freeze ended. Duration: ${formatTime(freezeDuration)}. Total recorded freezes: ${freezeEvents.length}`);
 }
 
 function stopStopwatch() {
     if (!isRunning) return;
 
-    const trialEndTime = Date.now(); // Record absolute end time
+    const trialEndTime = Date.now(); 
     clearInterval(timerInterval);
     isRunning = false;
 
-    // If the freeze button was still being held when STOP was pressed
     if (freezePressStartTime !== 0) {
         const finalFreezeDuration = trialEndTime - freezePressStartTime;
         const freezeStartRelative = freezePressStartTime - startTime;
@@ -203,32 +176,25 @@ function stopStopwatch() {
         freezeButton.style.backgroundColor = '';
     }
 
-    if (navigator.vibrate) {
-        navigator.vibrate(0); // Stop any lingering vibration
-        console.log('Vibration stopped by stopStopwatch if lingering!');
-    }
+    if (navigator.vibrate) navigator.vibrate(0); 
 
-    totalTrialTimeMs = trialEndTime - startTime; // Store total trial time
+    totalTrialTimeMs = trialEndTime - startTime; 
 
-    // Calculate and Display Report (initial display)
-    updateReportAndFreezeList(); // This also populates report fields and calls renderFreezeList()
+    updateReportAndFreezeList(); 
 
-    // Package trial data for storage
     const patientId = patientIdInput.value.trim();
-    const trialNumber = trialNumberInput.value; // Grabs the task string
+    const combinedTaskString = `${medStateInput.value}_${taskNameInput.value}`; 
     let currentTotalFreezeDuration = 0;
     freezeEvents.forEach(event => { currentTotalFreezeDuration += event.durationMs; });
     const currentFreezeCount = freezeEvents.length;
     const percentFrozen = (totalTrialTimeMs > 0) ? (currentTotalFreezeDuration / totalTrialTimeMs) * 100 : 0;
     const { cumulativeGrade, frequencyGrade } = classifyFoG(totalTrialTimeMs, currentTotalFreezeDuration, currentFreezeCount, freezeEvents);
 
-
-    // Create a deep copy of freezeEvents to store it, so future edits don't affect past records
     const freezesForStorage = JSON.parse(JSON.stringify(freezeEvents));
 
     const trialData = {
         patientId: patientId,
-        trialNumber: trialNumber, // Stores the task string (e.g., "ON_Giladi_Walk")
+        trialNumber: combinedTaskString, // Stores "OFF_Giladi_Walk"
         trialStartTimestamp: startTime,
         trialEndTimestamp: trialEndTime,
         totalTrialDurationMs: totalTrialTimeMs,
@@ -237,30 +203,29 @@ function stopStopwatch() {
         percentTrialFrozen: percentFrozen,
         cumulativeFoGGrade: cumulativeGrade,
         frequencyFoGGrade: frequencyGrade,
-        freezeEvents: freezesForStorage // Array of individual freeze objects
+        freezeEvents: freezesForStorage 
     };
     allTrialsData.push(trialData);
-    saveTrialsData(); // Save to local storage after each trial
+    saveTrialsData(); 
 
-    // Enable inputs and hide main action buttons
+    // Enable inputs
     patientIdInput.disabled = false;
-    trialNumberInput.disabled = false;
+    medStateInput.disabled = false;
+    taskNameInput.disabled = false;
     
-    startButton.disabled = false; // Re-enable start button
-    freezeButton.disabled = true; // Keep freeze button disabled
-    stopButton.disabled = true;   // Keep stop button disabled
+    startButton.disabled = false; 
+    freezeButton.disabled = true; 
+    stopButton.disabled = true;   
 
-    reportBox.style.display = 'block'; // Show report
-    freezeListContainer.style.display = 'block'; // CRUCIAL: Ensure this is set to block here!
+    reportBox.style.display = 'block'; 
+    freezeListContainer.style.display = 'block'; 
 
-    console.log(`Stopwatch stopped. Report generated.`);
-    console.log('Freeze Events (full data):', freezeEvents); 
-    console.log('Stored Trial Data:', trialData);
-
-    // Auto-advance to the next task in the dropdown after stopping
-    const currentIndex = trialNumberInput.selectedIndex;
-    if (currentIndex < trialNumberInput.options.length - 1) {
-        trialNumberInput.selectedIndex = currentIndex + 1;
+    // Auto-advance to the next task in the dropdown
+    const currentIndex = taskNameInput.selectedIndex;
+    if (currentIndex < taskNameInput.options.length - 1) {
+        taskNameInput.selectedIndex = currentIndex + 1;
+    } else {
+        taskNameInput.selectedIndex = 0; // Reset to top if at the end
     }
 }
 
@@ -274,26 +239,25 @@ function updateReportAndFreezeList() {
 
     const currentFreezeCount = freezeEvents.length;
     const percentFrozen = (totalTrialTimeMs > 0) ? (currentTotalFreezeDuration / totalTrialTimeMs) * 100 : 0;
+    const combinedTaskString = `${medStateInput.value}_${taskNameInput.value}`;
 
     // Update Report Spans
     reportPatientIdSpan.textContent = patientIdInput.value.trim();
-    reportTrialNumberSpan.textContent = trialNumberInput.value; // Display task string
+    reportTrialNumberSpan.textContent = combinedTaskString; 
     totalTrialTimeSpan.textContent = formatTime(totalTrialTimeMs);
     numberOfFreezesSpan.textContent = currentFreezeCount;
     percentFrozenSpan.textContent = `${percentFrozen.toFixed(2)}%`;
     timeSpentFrozenSpan.textContent = formatTime(currentTotalFreezeDuration);
 
-    // Classify FoG
     const { cumulativeGrade, frequencyGrade } = classifyFoG(totalTrialTimeMs, currentTotalFreezeDuration, currentFreezeCount, freezeEvents);
     cumulativeFoGGradeSpan.textContent = cumulativeGrade;
     frequencyFoGGradeSpan.textContent = frequencyGrade;
 
-    // Render/Re-render Freeze List
     renderFreezeList();
 }
 
 function renderFreezeList() {
-    freezeList.innerHTML = ''; // Clear existing list
+    freezeList.innerHTML = ''; 
 
     if (freezeEvents.length === 0) {
         freezeList.innerHTML = '<p style="font-size: 0.9em; color: #777;">No freeze episodes recorded for this trial.</p>';
@@ -303,7 +267,7 @@ function renderFreezeList() {
     freezeEvents.forEach((event, index) => {
         const freezeItem = document.createElement('div');
         freezeItem.className = 'freeze-item';
-        freezeItem.dataset.id = event.id; // Store unique ID for easy lookup
+        freezeItem.dataset.id = event.id; 
 
         freezeItem.innerHTML = `
             <span>Freeze ${index + 1}: <span class="freeze-duration">${formatTime(event.durationMs)}</span></span>
@@ -315,7 +279,6 @@ function renderFreezeList() {
         freezeList.appendChild(freezeItem);
     });
 
-    // Add event listeners to the newly created buttons
     addFreezeListEventListeners();
 }
 
@@ -337,15 +300,12 @@ function editFreeze(buttonElement) {
 
     const durationSpan = freezeItemDiv.querySelector('.freeze-duration');
     const originalDurationMs = freeze.durationMs;
-
-    // Convert milliseconds to seconds for easier editing
-    const durationInSeconds = (originalDurationMs / 1000).toFixed(1); // One decimal place
+    const durationInSeconds = (originalDurationMs / 1000).toFixed(1); 
 
     durationSpan.innerHTML = `
         <input type="number" step="0.1" min="0" value="${durationInSeconds}" class="edit-input"> s
     `;
 
-    // Change buttons to Save/Cancel
     const actionsDiv = freezeItemDiv.querySelector('.freeze-actions');
     actionsDiv.innerHTML = `
         <button class="save-edit-btn">Save</button>
@@ -358,8 +318,7 @@ function editFreeze(buttonElement) {
 
         if (isNaN(newDurationSeconds) || newDurationSeconds < 0) {
             alert('Please enter a valid positive number for duration.');
-            // Revert to original state if invalid input
-            durationSpan.textContent = formatTime(originalDurationMs); // Restore original formatted duration
+            durationSpan.textContent = formatTime(originalDurationMs); 
             actionsDiv.innerHTML = `
                 <button class="edit-btn">Edit</button>
                 <button class="delete-btn">Delete</button>
@@ -368,33 +327,28 @@ function editFreeze(buttonElement) {
             return;
         }
 
-        const newDurationMs = Math.round(newDurationSeconds * 1000); // Convert back to milliseconds
+        const newDurationMs = Math.round(newDurationSeconds * 1000); 
 
-        // Update the freeze object
         freeze.durationMs = newDurationMs;
-        // Re-calculate endMs based on new duration, assuming startMs is fixed
         freeze.endMs = freeze.startMs + newDurationMs; 
 
-        // Update the report and list. Crucially, also save to local storage.
         updateReportAndFreezeList();
         saveTrialsData(); 
     };
 
     actionsDiv.querySelector('.cancel-edit-btn').onclick = () => {
-        // Restore original content and buttons
-        durationSpan.textContent = formatTime(originalDurationMs); // Use the original duration
+        durationSpan.textContent = formatTime(originalDurationMs); 
         actionsDiv.innerHTML = `
             <button class="edit-btn">Edit</button>
             <button class="delete-btn">Delete</button>
         `;
-        addFreezeListEventListeners(); // Re-attach listeners for the restored buttons
+        addFreezeListEventListeners(); 
     };
     
-    // Auto-focus on the input field
     const editInput = freezeItemDiv.querySelector('.edit-input');
     if (editInput) {
         editInput.focus();
-        editInput.select(); // Select existing text for easy overwrite
+        editInput.select(); 
     }
 }
 
@@ -402,25 +356,19 @@ function editFreeze(buttonElement) {
 function deleteFreeze(buttonElement) {
     const freezeItemDiv = buttonElement.closest('.freeze-item');
     const freezeId = parseInt(freezeItemDiv.dataset.id);
-
-    // Find the index of the freeze to be deleted
     const indexToDelete = freezeEvents.findIndex(f => f.id === freezeId);
 
-    if (indexToDelete === -1) return; // Freeze not found
+    if (indexToDelete === -1) return; 
 
-    // Prompt for confirmation before deleting
     if (!confirm(`Are you sure you want to delete Freeze ${indexToDelete + 1}? This action cannot be undone.`)) {
-        return; // User cancelled
+        return; 
     }
 
-    // Remove the freeze from the array
     freezeEvents.splice(indexToDelete, 1);
     
-    // Update the report and list. Crucially, also save to local storage.
     updateReportAndFreezeList();
     saveTrialsData();
 }
-
 
 // --- FoG Classification Function ---
 function classifyFoG(totalTrialTimeMs, totalFreezeDurationMs, freezeCount, freezeEvents) {
@@ -428,25 +376,22 @@ function classifyFoG(totalTrialTimeMs, totalFreezeDurationMs, freezeCount, freez
     let frequencyGradeText = '';
 
     const percentFrozen = (totalTrialTimeMs > 0) ? (totalFreezeDurationMs / totalTrialTimeMs) * 100 : 0;
-    const MAX_FOG_DURATION_FOR_GRADE_4 = 60000; // 60 seconds in milliseconds
-    const BRIEF_FOG_THRESHOLD_MS = 1000; // <1sec
-    const LONG_FOG_THRESHOLD_MS = 2000; // >2seconds
+    const MAX_FOG_DURATION_FOR_GRADE_4 = 60000; 
+    const BRIEF_FOG_THRESHOLD_MS = 1000; 
+    const LONG_FOG_THRESHOLD_MS = 2000; 
 
-
-    // --- Cumulative Duration of FoG Classification ---
     if (totalFreezeDurationMs > MAX_FOG_DURATION_FOR_GRADE_4) {
         cumulativeGradeText = '4 = Unable/assistance required';
     } else if (percentFrozen > 50) {
         cumulativeGradeText = '3 = Severe (>50% trial frozen)';
     } else if (percentFrozen > 10) {
         cumulativeGradeText = '2 = Moderate (>10% trial frozen)';
-    } else if (totalFreezeDurationMs > 0) { // If there was any freezing, but less than 10%
+    } else if (totalFreezeDurationMs > 0) { 
         cumulativeGradeText = '1 = Mild (<10% trial frozen)';
     } else {
         cumulativeGradeText = '0 = No Freezing';
     }
 
-    // --- Frequency of FoG Classification ---
     if (totalFreezeDurationMs > MAX_FOG_DURATION_FOR_GRADE_4) {
         frequencyGradeText = '4 = Unable/assistance required';
     } else if (freezeCount === 0) {
@@ -457,16 +402,13 @@ function classifyFoG(totalTrialTimeMs, totalFreezeDurationMs, freezeCount, freez
         } else if (freezeEvents[0].durationMs > LONG_FOG_THRESHOLD_MS) {
             frequencyGradeText = '2 = Multiple brief FoG episodes (>1 episodes) OR 1 long-lasting episode (lasting >2seconds)';
         } else {
-            // This case handles a single freeze between 1 and 2 seconds.
-            // Based on previous logic, it falls into "Grade 2" as it's not "brief (<1s)"
             frequencyGradeText = '2 = Multiple brief FoG episodes (>1 episodes) OR 1 long-lasting episode (lasting >2seconds)';
         }
-    } else { // Multiple freeze episodes (freezeCount > 1)
-        let hasLongEpisode = freezeEvents.some(event => event.durationMs > LONG_FOG_THRESHOLD_MS); // Check if *any* episode is long
+    } else { 
+        let hasLongEpisode = freezeEvents.some(event => event.durationMs > LONG_FOG_THRESHOLD_MS); 
         if (hasLongEpisode) {
             frequencyGradeText = '3 = Many long FoG episodes (>1 episodes)';
         } else {
-            // All multiple episodes are brief (i.e., none > 2000ms)
             frequencyGradeText = '2 = Multiple brief FoG episodes (>1 episodes) OR 1 long-lasting episode (lasting >2seconds)';
         }
     }
@@ -486,34 +428,32 @@ function exportDataToCsv() {
         return;
     }
 
-    // Updated headers to reflect new time formatting and added absolute timestamps for Freeze Start/End
     const headers = [
-        'Patient_ID', 'Task', // Updated from Trial_Number to Task
-        'Trial_Start_Time_of_Day', 'Trial_End_Time_of_Day', // New: Time of day
-        'Trial_Start_Timestamp_ISO', 'Trial_End_Timestamp_ISO', // Original: ISO for full timestamp
+        'Patient_ID', 'Task', 
+        'Trial_Start_Time_of_Day', 'Trial_End_Time_of_Day', 
+        'Trial_Start_Timestamp_ISO', 'Trial_End_Timestamp_ISO', 
         'Trial_Duration_ms', 'Trial_Duration_Formatted',
         'Total_Freezes_Count', 'Total_Freeze_Duration_ms', 'Total_Freeze_Duration_Formatted', 'Percent_Trial_Frozen',
         'FoG_Cumulative_Grade', 'FoG_Frequency_Grade',
         'Freeze_Event_ID', 
         'Freeze_Start_Relative_ms', 'Freeze_End_Relative_ms', 'Freeze_Duration_ms', 'Freeze_Start_Relative_Formatted',
-        'Freeze_Start_Time_of_Day', 'Freeze_End_Time_of_Day' // New: Freeze Time of Day
+        'Freeze_Start_Time_of_Day', 'Freeze_End_Time_of_Day' 
     ];
 
     let csvRows = [];
-    csvRows.push(headers.join(',')); // Add headers to the CSV
+    csvRows.push(headers.join(',')); 
 
     allTrialsData.forEach(trial => {
         const trialStartAbsoluteDate = new Date(trial.trialStartTimestamp);
         const trialEndAbsoluteDate = new Date(trial.trialEndTimestamp);
 
-        // Base row data for the trial (repeated for each freeze event)
         const baseTrialData = [
-            `"${trial.patientId}"`, // Enclose in quotes for safety with potential commas/spaces
-            `"${trial.trialNumber}"`, // Stores the task string now
-            formatTimeOfDay(trialStartAbsoluteDate), // New time of day column
-            formatTimeOfDay(trialEndAbsoluteDate),   // New time of day column
-            formatTimestampISO(trialStartAbsoluteDate), // Original ISO timestamp
-            formatTimestampISO(trialEndAbsoluteDate),   // Original ISO timestamp
+            `"${trial.patientId}"`, 
+            `"${trial.trialNumber}"`, // Outputs the stitched string
+            formatTimeOfDay(trialStartAbsoluteDate), 
+            formatTimeOfDay(trialEndAbsoluteDate),   
+            formatTimestampISO(trialStartAbsoluteDate), 
+            formatTimestampISO(trialEndAbsoluteDate),   
             trial.totalTrialDurationMs,
             formatTime(trial.totalTrialDurationMs),
             trial.numberOfFreezes,
@@ -526,7 +466,6 @@ function exportDataToCsv() {
 
         if (trial.freezeEvents && trial.freezeEvents.length > 0) {
             trial.freezeEvents.forEach(freeze => {
-                // Calculate absolute freeze start/end times for time of day formatting
                 const freezeStartAbsoluteDate = new Date(trial.trialStartTimestamp + freeze.startMs);
                 const freezeEndAbsoluteDate = new Date(trial.trialStartTimestamp + freeze.endMs);
 
@@ -536,14 +475,13 @@ function exportDataToCsv() {
                     freeze.endMs,
                     freeze.durationMs,
                     formatTime(freeze.startMs),
-                    formatTimeOfDay(freezeStartAbsoluteDate), // New freeze time of day
-                    formatTimeOfDay(freezeEndAbsoluteDate)    // New freeze time of day
+                    formatTimeOfDay(freezeStartAbsoluteDate), 
+                    formatTimeOfDay(freezeEndAbsoluteDate)    
                 ];
                 csvRows.push(baseTrialData.concat(freezeData).join(','));
             });
         } else {
-            // If no freezes, still include the trial data with blank freeze specific columns
-            const freezeData = ['', '', '', '', '', '', '']; // Blanks for new freeze columns
+            const freezeData = ['', '', '', '', '', '', '']; 
             csvRows.push(baseTrialData.concat(freezeData).join(','));
         }
     });
@@ -554,39 +492,31 @@ function exportDataToCsv() {
     const link = document.createElement('a');
     link.setAttribute('href', url);
 
-    // Dynamic filename: PatientID_Export_YYYYMMDD_HHMM.csv
     const now = new Date();
     const dateString = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
     const timeString = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
-    const patientIdForFilename = patientIdInput.value.trim().replace(/\s/g, '_') || 'UnknownPatient'; // Replace spaces with underscores
+    const patientIdForFilename = patientIdInput.value.trim().replace(/\s/g, '_') || 'UnknownPatient'; 
     link.setAttribute('download', `${patientIdForFilename}_FoG_Data_${dateString}_${timeString}.csv`);
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url); // Clean up the URL object
-
+    URL.revokeObjectURL(url); 
     console.log('Data exported to CSV.');
 }
-
 
 // --- Event Listeners ---
 startButton.addEventListener('click', startStopwatch);
 
-// Mouse Events
 freezeButton.addEventListener('mousedown', recordFreezeStart);
 freezeButton.addEventListener('mouseup', recordFreezeEnd);
-freezeButton.addEventListener('mouseleave', recordFreezeEnd); // In case mouse leaves button while held
+freezeButton.addEventListener('mouseleave', recordFreezeEnd); 
 
-// Touch Events
 freezeButton.addEventListener('touchstart', recordFreezeStart);
 freezeButton.addEventListener('touchend', recordFreezeEnd);
-freezeButton.addEventListener('touchcancel', recordFreezeEnd); // In case touch is cancelled/interrupted
+freezeButton.addEventListener('touchcancel', recordFreezeEnd); 
 
 stopButton.addEventListener('click', stopStopwatch);
-
-// New Export Button Listener
 exportDataButton.addEventListener('click', exportDataToCsv);
 
-// Initial load of any existing data
-loadTrialsData(); // Load any previously stored data when the app starts
+loadTrialsData();
